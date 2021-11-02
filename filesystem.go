@@ -3,7 +3,7 @@
 package storage
 
 import (
-	"time"
+	"os"
 )
 
 type Filesystem interface {
@@ -17,17 +17,15 @@ type Filesystem interface {
 
 	Delete(src string) error
 
+	Mkdir(folderPath string, perm os.FileMode) error
+
 	Has(filename string) bool
 
-	Read(filename string) []byte
+	Get(filename string) ([]byte, error)
 
 	ListContents(path string, deepLevel int) []string
 
 	Metadata() map[string]string
 
-	Mimetype() string
-
 	Size() int64
-
-	Timestamp() time.Time
 }
