@@ -11,9 +11,9 @@ type Filesystem interface {
 
 	Append(filename string, content []byte, options ...interface{}) error
 
-	Rename(oldname string, newname string) error
+	Move(src, dst string) error
 
-	Copy(src string, dst string) error
+	Copy(src, dst string) error
 
 	Delete(src string) error
 
@@ -23,9 +23,16 @@ type Filesystem interface {
 
 	Get(filename string) ([]byte, error)
 
-	ListContents(path string, deepLevel int) []string
+	Directories(path string) []string
 
-	Metadata() map[string]string
+	Files(path string) []string
 
-	Size() int64
+	SetVisibility(filename string, visibility string) error
+
+	GetVisibility(filename string) string
+
+	Metadata(filename string) Metadata
+
+	// TODO..
+	// PutFileAs(filename string, fd os.File, dst string) error
 }
