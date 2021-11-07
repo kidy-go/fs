@@ -16,16 +16,31 @@ const (
 	LS_MODE_DIR
 )
 
-type Local struct {
-	RootPath string
+const (
+	STAT_DIR          = true
+	STAT_FILE         = false
+	PERM_FILE_PUBLIC  = os.FileMode(0644)
+	PERM_FILE_PRIVATE = os.FileMode(0600)
+	PERM_DIR_PUBLIC   = os.FileMode(0755)
+	PERM_DIR_PRIVATE  = os.FileMode(0700)
+)
+
+type visperm = map[string]os.FileMode
+type visibilitys = map[bool]visperm
+
+var permissions = visibilitys{
+	STAT_FILE: visperm{
+		"public":  PERM_FILE_PUBLIC,
+		"private": PERM_FILE_PRIVATE,
+	},
+	STAT_DIR: visperm{
+		"public":  PERM_DIR_PUBLIC,
+		"private": PERM_DIR_PRIVATE,
+	},
 }
 
-var permFiles, permDirs = map[string]os.FileMode{
-	"public":  os.FileMode(0644),
-	"private": os.FileMode(0600),
-}, map[string]os.FileMode{
-	"public":  os.FileMode(0755),
-	"private": os.FileMode(0700),
+type Local struct {
+	RootPath string
 }
 
 func NewLocal(rootPath string) *Local {
@@ -40,7 +55,7 @@ func (lc *Local) Write(filename string, content []byte, options ...interface{}) 
 	path := lc.applyPathPrefix(filename)
 
 	// o := os.O_APPEND | os.O_WRONLY
-	o, p := os.O_WRONLY, permFiles["public"] //os.ModePerm
+	o, p := os.O_WRONLY, PERM_FILE_PUBLIC //os.ModePerm
 	if _, op := utils.GetTypeOf(options, "FileMode"); op != nil {
 		p = op.(os.FileMode)
 	}
@@ -50,8 +65,10 @@ func (lc *Local) Write(filename string, content []byte, options ...interface{}) 
 	}
 
 	if _, op := utils.GetTypeOf(options, "string"); op != nil {
-		if visibility, ok := permFiles[op.(string)]; ok {
-			p = visibility
+		if "public" == op {
+			p = PERM_FILE_PUBLIC
+		} else if "private" == op {
+			p = PERM_FILE_PRIVATE
 		}
 	}
 
@@ -107,15 +124,54 @@ func (lc *Local) Append(filename string, content []byte, options ...interface{})
 	return lc.Write(filename, content, options...)
 }
 
-func (lc *Local) Rename(oldname, newname string) error {
-	return nil
+func (lc *Local) Move(src, dst string) error {
+	srcpath, dstpath := lc.applyPathPrefix(src), lc.applyPathPrefix(dst)
+	if !lc.Has(src) {
+		return fmt.Errorf("the source file(%s) not found", src)
+	}
+
+	if folderPath := filepath.Dir(dstpath); !lc.Has(folderPath) {
+		lc.Mkdir(folderPath, os.ModePerm)
+		lc.Chown(folderPath, os.ModePerm)
+	}
+
+	return os.Rename(srcpath, dstpath)
 }
 
 func (lc *Local) Copy(src, dst string) error {
-	return nil
+	srcpath, dstpath := lc.applyPathPrefix(src), lc.applyPathPrefix(dst)
+	if !lc.Has(src) {
+		return fmt.Errorf("the source file(%s) not found", src)
+	}
+
+	if folderPath := filepath.Dir(dstpath); !lc.Has(folderPath) {
+		lc.Mkdir(folderPath, os.ModePerm)
+		lc.Chown(folderPath, os.ModePerm)
+	}
+
+	srcd, err := os.Open(srcpath)
+	defer srcd.Close()
+	if err != nil {
+		return err
+	}
+
+	dstd, err := os.Create(dstpath)
+	defer dstd.Close()
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(dstd, srcd)
+	return err
 }
 
 func (lc *Local) Delete(src string) error {
+	meta, srcpath := lc.Metadata(src), lc.applyPathPrefix(src)
+	if meta.Type == "file" {
+		return os.Remove(srcpath)
+	} else {
+		return os.RemoveAll(srcpath)
+	}
 	return nil
 }
 
@@ -138,19 +194,18 @@ func (lc *Local) Get(filename string) ([]byte, error) {
 	return io.ReadAll(fd)
 }
 
-func (lc *Local) SetVisibility(filename string, visibility string) {
+func (lc *Local) SetVisibility(filename string, visibility string) error {
 	path := lc.applyPathPrefix(filename)
+	stat, err := os.Stat(path)
 
-	if stat, err := os.Stat(path); err == nil {
-		oPerm, ok := permFiles[visibility]
-		if stat.IsDir() {
-			oPerm, ok = permDirs[visibility]
-		}
-
-		if ok {
-			lc.Chown(filename, oPerm)
-		}
+	if err != nil {
+		return err
 	}
+
+	if oPerm, ok := permissions[stat.IsDir()][visibility]; ok {
+		return lc.Chown(filename, oPerm)
+	}
+	return fmt.Errorf("not visibility: %s\n", visibility)
 }
 
 func (lc *Local) GetVisibility(filename string) string {
@@ -160,11 +215,9 @@ func (lc *Local) GetVisibility(filename string) string {
 		perm := fmt.Sprintf("%#o", stat.Mode())
 		perm = perm[len(perm)-4:]
 
-		fmt.Println("PERM >>>> ", perm)
-
-		public := fmt.Sprintf("%#o", permFiles["public"])
+		public := fmt.Sprintf("%#o", PERM_FILE_PUBLIC)
 		if stat.IsDir() {
-			public = fmt.Sprintf("%#o", permDirs["public"])
+			public = fmt.Sprintf("%#o", PERM_DIR_PUBLIC)
 		}
 
 		if perm == public[len(public)-4:] {
