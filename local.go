@@ -1,10 +1,10 @@
 // local.go kee > 2021/10/31
 
-package storage
+package fs
 
 import (
 	"fmt"
-	"github.com/kidy-go/storage/utils"
+	"github.com/kidy-go/fs/utils"
 	"io"
 	"os"
 	"path/filepath"

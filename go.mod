@@ -1,4 +1,4 @@
-module github.com/kidy-go/storage
+module github.com/kidy-go/fs
 
 go 1.16
 
