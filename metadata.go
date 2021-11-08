@@ -1,6 +1,6 @@
 // metadata.go kee > 2021/10/31
 
-package storage
+package fs
 
 import (
 	"github.com/gabriel-vasile/mimetype"

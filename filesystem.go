@@ -1,6 +1,6 @@
 // filesystem.go kee > 2021/10/31
 
-package storage
+package fs
 
 import (
 	"os"

@@ -1,9 +1,9 @@
 // local_test.go kee > 2021/11/05
 
-package storage_test
+package fs_test
 
 import (
-	"github.com/kidy-go/storage"
+	"github.com/kidy-go/fs"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
@@ -11,7 +11,7 @@ import (
 )
 
 var rootPath = ".temp/"
-var local = storage.NewLocal(rootPath)
+var local = fs.NewLocal(rootPath)
 
 func TestLocal(t *testing.T) {
 	assert := assert.New(t)

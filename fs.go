@@ -1,6 +1,6 @@
-// storage.go kee > 2021/10/31
+// fs.go kee > 2021/10/31
 
-package storage
+package fs
 
 type Drivers map[string]Filesystem
 
