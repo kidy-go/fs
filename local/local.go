@@ -1,9 +1,10 @@
 // local.go kee > 2021/10/31
 
-package fs
+package local
 
 import (
 	"fmt"
+	"github.com/kidy-go/fs"
 	"github.com/kidy-go/fs/utils"
 	"io"
 	"os"
@@ -266,8 +267,8 @@ func (lc *Local) Walk(root string, lsMode int) []string {
 	return paths
 }
 
-func (lc *Local) Metadata(filename string) Metadata {
+func (lc *Local) Metadata(filename string) fs.Metadata {
 	filename = lc.applyPathPrefix(filename)
-	finfo, _ := FileInfo(filename)
+	finfo, _ := fs.FileInfo(filename)
 	return finfo
 }
