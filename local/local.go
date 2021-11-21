@@ -44,7 +44,7 @@ type Local struct {
 	RootPath string
 }
 
-func NewLocal(rootPath string) *Local {
+func New(rootPath string) *Local {
 	return &Local{rootPath}
 }
 
