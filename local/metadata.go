@@ -1,6 +1,6 @@
-// metadata.go kee > 2021/10/31
+// local/metadata.go kee > 2021/11/21
 
-package fs
+package local
 
 import (
 	"github.com/gabriel-vasile/mimetype"
@@ -19,6 +19,10 @@ type Metadata struct {
 	PermMode  os.FileMode `json:"perm_mode"`
 	Type      string      `json:"type"`
 	Stat      os.FileInfo `json:"-"`
+}
+
+func (m Metadata) MIMEType() (*mimetype.MIME, error) {
+	return mimetype.DetectFile(m.Path)
 }
 
 func FileInfo(filename string) (Metadata, error) {
@@ -43,8 +47,4 @@ func FileInfo(filename string) (Metadata, error) {
 		Type:      fType,
 		Stat:      finfo,
 	}, nil
-}
-
-func (m Metadata) MIMEType() (*mimetype.MIME, error) {
-	return mimetype.DetectFile(m.Path)
 }

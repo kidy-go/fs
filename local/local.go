@@ -4,7 +4,7 @@ package local
 
 import (
 	"fmt"
-	"github.com/kidy-go/fs"
+	meta "github.com/kidy-go/fs/metadata"
 	"github.com/kidy-go/fs/utils"
 	"io"
 	"os"
@@ -167,8 +167,8 @@ func (lc *Local) Copy(src, dst string) error {
 }
 
 func (lc *Local) Delete(src string) error {
-	meta, srcpath := lc.Metadata(src), lc.applyPathPrefix(src)
-	if meta.Type == "file" {
+	metadata, srcpath := lc.Metadata(src), lc.applyPathPrefix(src)
+	if metadata.(*Metadata).Type == "file" {
 		return os.Remove(srcpath)
 	} else {
 		return os.RemoveAll(srcpath)
@@ -267,8 +267,8 @@ func (lc *Local) Walk(root string, lsMode int) []string {
 	return paths
 }
 
-func (lc *Local) Metadata(filename string) fs.Metadata {
+func (lc *Local) Metadata(filename string) meta.Metadata {
 	filename = lc.applyPathPrefix(filename)
-	finfo, _ := fs.FileInfo(filename)
+	finfo, _ := FileInfo(filename)
 	return finfo
 }

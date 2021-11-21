@@ -3,6 +3,7 @@
 package fs
 
 import (
+	meta "github.com/kidy-go/fs/metadata"
 	"os"
 )
 
@@ -31,7 +32,7 @@ type Filesystem interface {
 
 	GetVisibility(filename string) string
 
-	Metadata(filename string) Metadata
+	Metadata(filename string) meta.Metadata
 
 	// TODO..
 	// PutFileAs(filename string, fd os.File, dst string) error
